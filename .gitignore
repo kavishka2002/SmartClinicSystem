@@ -1,0 +1,223 @@
+# ============================================================================
+# SmartClinic .gitignore - Ensures sensitive data is never committed to Git
+# ============================================================================
+
+# ============================================================================
+# SENSITIVE DATA - DO NOT COMMIT
+# ============================================================================
+
+# Environment Variables (Local, Development, Production, Test)
+.env
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
+.env.*.local
+.env*.local
+
+# Firebase Credentials (CRITICAL - NEVER COMMIT)
+firebase-admin-service-account.json
+firebase-*.json
+*service-account*.json
+*service_account*.json
+google-service-account.json
+gcp-*.json
+
+# Credentials and Keys
+*.key
+*.pem
+*.pfx
+*.p12
+*.cert
+*.crt
+*.pub
+*.private
+*.secret
+*.credentials
+credentials.json
+secrets.json
+config.secret.js
+config.secret.json
+
+# API Keys and Tokens (Common patterns)
+.apikey
+api-key.json
+api-keys.json
+tokens.json
+token.json
+auth.json
+.auth
+oauth.json
+
+# AWS Credentials
+.aws/
+.aws-credentials
+aws-credentials.json
+~/.aws
+
+# GCP Credentials
+.gcloud/
+google-cloud-credentials.json
+gcp-credentials.json
+
+# Database URLs and connection strings
+.db
+.database
+database-config.json
+connection-string.json
+
+# Other sensitive files
+*.pem
+*.key
+*.cert
+.ssh/
+.vault/
+
+# ============================================================================
+# DEPENDENCIES
+# ============================================================================
+node_modules/
+npm-debug.log
+npm-error.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+pnpm-error.log
+
+# ============================================================================
+# BUILD ARTIFACTS
+# ============================================================================
+.next/
+out/
+build/
+dist/
+.turbo/
+.turbopack/
+
+# ============================================================================
+# NEXT.JS SPECIFIC
+# ============================================================================
+.next
+out
+.env.local.example
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ============================================================================
+# OS & IDE
+# ============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+*.swp
+.CFUserTextEncoding
+
+# Windows
+Thumbs.db
+desktop.ini
+.swp
+.swo
+*~
+
+# Linux
+*~
+.#*
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.iml
+.gradle
+.metals
+.bloop
+build/
+.idea
+project/metals.sbt
+
+# Vim
+.vim/
+.vimrc.local
+.viminfo
+.vim-history
+
+# Emacs
+*~
+\#*\#
+.\#*
+*.swp
+.#*
+
+# ============================================================================
+# TESTING & COVERAGE
+# ============================================================================
+coverage/
+.nyc_output/
+*.lcov
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.hypothesis/
+
+# ============================================================================
+# PRODUCTION & DEPLOYMENT
+# ============================================================================
+# Vercel
+.vercel
+.vercel/
+.output/
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Environment-specific
+.env.production
+.env.staging
+
+# ============================================================================
+# LOGS & TEMP FILES
+# ============================================================================
+logs/
+*.log
+temp/
+tmp/
+.tmp/
+cache/
+.cache/
+
+# ============================================================================
+# IDE WORKSPACE
+# ============================================================================
+.workspace
+workspace.code-workspace
+
+# ============================================================================
+# PACKAGE MANAGERS
+# ============================================================================
+.pnp
+.pnp.js
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ============================================================================
+# SYSTEM FILES
+# ============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+$RECYCLE.BIN/
