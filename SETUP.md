@@ -9,7 +9,6 @@ This document explains how to set up the SmartClinic project with proper environ
 - Node.js 18+ installed
 - npm or yarn package manager
 - Firebase project created at https://console.firebase.google.com
-- Firebase Admin SDK service account JSON file
 
 ## Project Structure
 
@@ -17,16 +16,17 @@ This document explains how to set up the SmartClinic project with proper environ
 smart-clinic/
 ├── .env.example                          # Template for environment variables
 ├── .env.local                            # Local development environment (NOT in git)
-├── .gitignore                            # Excludes .env, credentials, etc.
-├── firebase-admin-service-account.json   # Firebase admin credentials (NOT in git)
+├── .gitignore                            # Excludes .env and credentials files
 ├── app/
 │   ├── lib/
 │   │   ├── firebaseConfig.ts            # Uses NEXT_PUBLIC_FIREBASE_* env vars
-│   │   ├── firebaseAdmin.ts             # Uses FIREBASE_ADMIN_CREDENTIALS_PATH
+│   │   ├── firebaseAdmin.ts             # Uses FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
 │   │   └── firebaseClient.ts            # Client-side Firebase initialization
 │   └── [other files]
 └── [other files]
 ```
+
+**Note**: `firebase-admin-service-account.json` is no longer needed. All credentials are now managed via environment variables for better security and Vercel deployment compatibility.
 
 ## Setup Steps
 
@@ -66,13 +66,18 @@ npm install
 2. Navigate to **Service Accounts** tab
 3. Click **Generate New Private Key**
 4. A JSON file will download automatically
-5. Save it to the project root as: `firebase-admin-service-account.json`
+5. Extract these values from the JSON file:
+   - `project_id` → `FIREBASE_PROJECT_ID`
+   - `private_key_id` → `FIREBASE_PRIVATE_KEY_ID`
+   - `private_key` → `FIREBASE_PRIVATE_KEY` (with `\n` escaped as `\\n`)
+   - `client_email` → `FIREBASE_CLIENT_EMAIL`
+   - `client_id` → `FIREBASE_CLIENT_ID`
 
 ### 4. Configure Environment Variables
 
-The `.env.local` file is already created with the correct values. **DO NOT commit this file to Git.**
+#### Option A: Individual Environment Variables (Recommended for Vercel)
 
-**For development**, the `.env.local` file is already set up with:
+The `.env.local` file should contain individual environment variables:
 
 ```env
 # Client-side Firebase config (visible in browser)
@@ -85,11 +90,23 @@ NEXT_PUBLIC_FIREBASE_APP_ID=1:833271231389:web:f1c03c1f10c766b50b7574
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-YJYY4XDJ2F
 
 # Server-side Firebase Admin (NOT visible in browser)
-FIREBASE_ADMIN_CREDENTIALS_PATH=firebase-admin-service-account.json
+FIREBASE_PROJECT_ID=smart-clinic-system-abb66
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@smart-clinic-system-abb66.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQE...\n-----END PRIVATE KEY-----\n
+FIREBASE_PRIVATE_KEY_ID=your_private_key_id
+FIREBASE_CLIENT_ID=your_client_id
 
 # Application Settings
 NODE_ENV=development
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+#### Option B: Full Service Account JSON (Alternative)
+
+If you prefer, you can provide the entire service account JSON as a single string:
+
+```env
+FIREBASE_ADMIN_CREDENTIALS={"type":"service_account","project_id":"smart-clinic-system-abb66","private_key":"...","client_email":"..."}
 ```
 
 ### 5. For Vercel Production Deployment
@@ -99,20 +116,23 @@ In your Vercel dashboard:
 1. Go to your project settings
 2. Navigate to **Environment Variables**
 3. Add all `NEXT_PUBLIC_FIREBASE_*` variables (same as in `.env.local`)
-4. Add `FIREBASE_ADMIN_CREDENTIALS_PATH` or `FIREBASE_ADMIN_CREDENTIALS` (JSON string)
+4. Add the Firebase Admin credentials using ONE of these options:
 
-**IMPORTANT**: For Vercel, you have two options for the Firebase Admin credentials:
+**Option A: Individual Environment Variables (Recommended)**
+```
+FIREBASE_PROJECT_ID=smart-clinic-system-abb66
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@smart-clinic-system-abb66.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQE...\n-----END PRIVATE KEY-----\n
+FIREBASE_PRIVATE_KEY_ID=your_private_key_id
+FIREBASE_CLIENT_ID=your_client_id
+```
 
-**Option A: Upload JSON file to Vercel (Recommended)**
-- Go to Vercel → Project Settings → Environment Variables
-- Add: `FIREBASE_ADMIN_CREDENTIALS_PATH=firebase-admin-service-account.json`
-- Upload the JSON file to your repository (it's in `.gitignore` for local but can be added to Vercel)
+**Option B: Full Service Account JSON (Alternative)**
+```
+FIREBASE_ADMIN_CREDENTIALS={"type":"service_account","project_id":"smart-clinic-system-abb66","private_key":"...","client_email":"..."}
+```
 
-**Option B: Use environment variable (Alternative)**
-- Stringify your service account JSON and set it as:
-  ```
-  FIREBASE_ADMIN_CREDENTIALS='{"type":"service_account",...}'
-  ```
+**Note**: The individual environment variable approach (Option A) is recommended because Vercel environment variables don't need special escaping for multiline values when set individually.
 
 ### 6. Verify Firebase Setup
 
@@ -160,8 +180,12 @@ These variables are NOT accessible from the browser and are secure.
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `FIREBASE_ADMIN_CREDENTIALS_PATH` | Path to service account JSON | `firebase-admin-service-account.json` |
-| `FIREBASE_ADMIN_CREDENTIALS` | Service account JSON as string | `{"type":"service_account",...}` |
+| `FIREBASE_PROJECT_ID` | Firebase project ID | `smart-clinic-system-abb66` |
+| `FIREBASE_CLIENT_EMAIL` | Firebase service account email | `firebase-adminsdk-xxxxx@smart-clinic-system-abb66.iam.gserviceaccount.com` |
+| `FIREBASE_PRIVATE_KEY` | Firebase private key (with `\n` escaped) | `-----BEGIN PRIVATE KEY-----\nMIIEv...` |
+| `FIREBASE_PRIVATE_KEY_ID` | Private key ID | `xxxxxxxxxxxxx` |
+| `FIREBASE_CLIENT_ID` | Firebase client ID | `xxxxxxxxxxxxx` |
+| `FIREBASE_ADMIN_CREDENTIALS` | Full service account as JSON string (alternative) | `{"type":"service_account",...}` |
 | `NODE_ENV` | Environment name | `development` or `production` |
 
 ## Important Security Notes
@@ -190,10 +214,13 @@ These variables are NOT accessible from the browser and are secure.
 **Problem**: Application fails to start with Firebase Admin error.
 
 **Solution**:
-1. Verify `firebase-admin-service-account.json` exists in project root
-2. Check that `FIREBASE_ADMIN_CREDENTIALS_PATH` is set correctly in `.env.local`
-3. Ensure the service account JSON is valid
-4. Regenerate the key if needed from Firebase Console
+1. Verify all Firebase Admin environment variables are set in `.env.local`:
+   - `FIREBASE_PROJECT_ID`
+   - `FIREBASE_CLIENT_EMAIL`
+   - `FIREBASE_PRIVATE_KEY`
+2. Check that `FIREBASE_PRIVATE_KEY` has proper newline escaping (with `\\n`)
+3. Alternatively, verify `FIREBASE_ADMIN_CREDENTIALS` JSON string is valid
+4. Regenerate the service account credentials from Firebase Console if needed
 
 ### Environment variables not loading
 
@@ -232,10 +259,9 @@ Before deploying, ensure these files exist and are properly configured:
 
 - [ ] `.env.local` - Contains all Firebase credentials (NOT in Git)
 - [ ] `.env.example` - Template for environment variables (in Git)
-- [ ] `.gitignore` - Includes `.env*` and `firebase-admin-service-account.json`
-- [ ] `firebase-admin-service-account.json` - Service account credentials (NOT in Git)
+- [ ] `.gitignore` - Includes `.env*` and credential files
 - [ ] `app/lib/firebaseConfig.ts` - Uses `process.env.NEXT_PUBLIC_*` variables
-- [ ] `app/lib/firebaseAdmin.ts` - Uses `process.env.FIREBASE_ADMIN_CREDENTIALS_PATH`
+- [ ] `app/lib/firebaseAdmin.ts` - Uses `process.env.FIREBASE_*` environment variables
 - [ ] `package.json` - All dependencies installed
 - [ ] `next.config.ts` - Next.js configuration
 

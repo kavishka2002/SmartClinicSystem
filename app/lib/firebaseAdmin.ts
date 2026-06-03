@@ -1,53 +1,77 @@
 import * as admin from "firebase-admin";
-import fs from "fs";
-import path from "path";
-import { firebaseConfig } from "./firebaseConfig";
 
 let adminApp: admin.app.App;
 
 function getAdminCredential() {
+  // Method 1: Use environment-provided service account credentials as JSON string
+  // This is the recommended method for Vercel and other cloud platforms
   if (process.env.FIREBASE_ADMIN_CREDENTIALS) {
-    return admin.credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_CREDENTIALS));
-  }
-
-  const credentialsPath = process.env.FIREBASE_ADMIN_CREDENTIALS_PATH ?? process.env.GOOGLE_APPLICATION_CREDENTIALS;
-
-  if (credentialsPath) {
-    const resolvedPath = path.isAbsolute(credentialsPath)
-      ? credentialsPath
-      : path.resolve(process.cwd(), credentialsPath);
-
-    if (!fs.existsSync(resolvedPath)) {
+    try {
+      const credentials = JSON.parse(process.env.FIREBASE_ADMIN_CREDENTIALS);
+      return admin.credential.cert(credentials);
+    } catch (error) {
       throw new Error(
-        `Firebase admin credential file not found at ${resolvedPath}. Please set FIREBASE_ADMIN_CREDENTIALS_PATH or GOOGLE_APPLICATION_CREDENTIALS to a valid service account JSON path.`
+        `Failed to parse FIREBASE_ADMIN_CREDENTIALS: ${error instanceof Error ? error.message : String(error)}`
       );
     }
-
-    const credentialsJson = JSON.parse(fs.readFileSync(resolvedPath, "utf8"));
-    return admin.credential.cert(credentialsJson);
   }
 
-  const defaultLocalPath = path.resolve(process.cwd(), "firebase-admin-service-account.json");
-  if (fs.existsSync(defaultLocalPath)) {
-    const credentialsJson = JSON.parse(fs.readFileSync(defaultLocalPath, "utf8"));
-    return admin.credential.cert(credentialsJson);
+  // Method 2: Use individual environment variables to construct service account
+  // This is useful for Vercel environment variables (can't easily store multi-line JSON)
+  if (
+    process.env.FIREBASE_PROJECT_ID &&
+    process.env.FIREBASE_CLIENT_EMAIL &&
+    process.env.FIREBASE_PRIVATE_KEY
+  ) {
+    const serviceAccount = {
+      type: "service_account",
+      project_id: process.env.FIREBASE_PROJECT_ID,
+      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID || "",
+      private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      client_email: process.env.FIREBASE_CLIENT_EMAIL,
+      client_id: process.env.FIREBASE_CLIENT_ID || "",
+      auth_uri: "https://accounts.google.com/o/oauth2/auth",
+      token_uri: "https://oauth2.googleapis.com/token",
+      auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+    };
+
+    try {
+      return admin.credential.cert(serviceAccount as admin.ServiceAccount);
+    } catch (error) {
+      throw new Error(
+        `Failed to initialize Firebase Admin with environment variables: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
-  return admin.credential.applicationDefault();
+  // Fallback: Try to use Google Application Default Credentials
+  // This works in some environments (like Google Cloud Run)
+  try {
+    return admin.credential.applicationDefault();
+  } catch (error) {
+    throw new Error(
+      `Firebase Admin credentials not found. Please provide either:\n` +
+      `1. FIREBASE_ADMIN_CREDENTIALS (JSON string), or\n` +
+      `2. FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY (individual variables)\n` +
+      `Error: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
 }
 
 if (!admin.apps.length) {
-  const credential = getAdminCredential();
-
   try {
+    const credential = getAdminCredential();
+
     adminApp = admin.initializeApp({
       credential,
-      projectId: firebaseConfig.projectId,
+      projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     });
   } catch (error) {
-    throw new Error(
-      `Firebase Admin initialization failed. Make sure FIREBASE_ADMIN_CREDENTIALS, FIREBASE_ADMIN_CREDENTIALS_PATH, or GOOGLE_APPLICATION_CREDENTIALS is configured correctly. Original error: ${error instanceof Error ? error.message : String(error)}`
+    console.error(
+      "Firebase Admin initialization failed:",
+      error instanceof Error ? error.message : String(error)
     );
+    throw error;
   }
 } else {
   adminApp = admin.app();

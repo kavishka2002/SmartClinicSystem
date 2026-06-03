@@ -17,10 +17,10 @@
 
 2. **Environment Variable Migration**
    - ✓ All Firebase config moved to NEXT_PUBLIC_* variables
-   - ✓ Firebase Admin credentials loaded via FIREBASE_ADMIN_CREDENTIALS_PATH
+   - ✓ Firebase Admin credentials loaded via individual environment variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY)
    - ✓ Session secrets use environment variables
    - ✓ firebaseConfig.ts uses process.env (already done)
-   - ✓ firebaseAdmin.ts uses process.env (already done)
+   - ✓ firebaseAdmin.ts uses process.env (updated to use individual env vars)
 
 3. **Git & Source Control Setup**
    - ✓ Git repository initialized
@@ -50,7 +50,7 @@
 
 ```bash
 # 1. Verify environment setup
-ls -la .env.local .env.example .gitignore firebase-admin-service-account.json
+ls -la .env.local .env.example .gitignore
 
 # 2. Verify build
 npm run build
@@ -69,7 +69,7 @@ npm run dev
 
 # 6. Git verification
 git status
-# Should show: untracked files (expected for .env.local and service account)
+# Should show: untracked files (expected for .env.local)
 # Should NOT show: files tracked that contain sensitive data
 ```
 
@@ -109,7 +109,6 @@ Key Routes Verified:
 ```
 Node.js 18+ ✓ (comes with npm)
 npm 9+ ✓
-firebase-admin-service-account.json ✓ (from Firebase Console)
 ```
 
 ### Step 1: Install Dependencies
@@ -125,21 +124,43 @@ npm install
 # Environment variables are already pre-configured in:
 # .env.local (development)
 
-# Verify the file exists:
+# Verify the file exists and contains Firebase config:
 cat .env.local
 
-# Should see all NEXT_PUBLIC_FIREBASE_* variables set
+# Should see:
+# - All NEXT_PUBLIC_FIREBASE_* variables
+# - FIREBASE_PROJECT_ID
+# - FIREBASE_CLIENT_EMAIL
+# - FIREBASE_PRIVATE_KEY
+# - Other settings
 ```
 
-### Step 3: Verify Credentials File
+### Step 3: Set Up Firebase Admin Credentials
+
+Firebase Admin credentials are now configured via environment variables. You have two options:
+
+**Option A: Individual Environment Variables (Recommended)**
+
+Set in `.env.local`:
+```bash
+FIREBASE_PROJECT_ID=smart-clinic-system-abb66
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@smart-clinic-system-abb66.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQE...\n-----END PRIVATE KEY-----\n
+FIREBASE_PRIVATE_KEY_ID=your_private_key_id
+FIREBASE_CLIENT_ID=your_client_id
+```
+
+**Option B: Full Service Account JSON (Alternative)**
 
 ```bash
-# Ensure firebase-admin-service-account.json exists in project root:
-ls firebase-admin-service-account.json
-
-# File should contain your Firebase service account JSON
-# (This file is NOT committed to Git - it's .gitignore'd)
+FIREBASE_ADMIN_CREDENTIALS={"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}
 ```
+
+**How to get these values:**
+1. Go to Firebase Console → Project Settings → Service Accounts
+2. Click "Generate New Private Key"
+3. Download the JSON file
+4. Extract the values as shown above
 
 ### Step 4: Start Development Server
 
@@ -229,9 +250,17 @@ NEXT_PUBLIC_FIREBASE_APP_ID=YOUR_APP_ID
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=YOUR_MEASUREMENT_ID
 
 # Firebase Server Configuration (private - NOT exposed to browser)
-# Get this from your Firebase Console → Service Accounts
+# Option 1: Use individual environment variables (Recommended)
+# Get these from your Firebase Console → Service Accounts
+FIREBASE_PROJECT_ID=YOUR_PROJECT_ID
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@YOUR_PROJECT.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQE...\n-----END PRIVATE KEY-----\n
+FIREBASE_PRIVATE_KEY_ID=YOUR_PRIVATE_KEY_ID
+FIREBASE_CLIENT_ID=YOUR_CLIENT_ID
+
+# Option 2: Use full service account JSON as string (Alternative)
 # Copy the entire JSON and paste as a single-line string:
-FIREBASE_ADMIN_CREDENTIALS={"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}
+# FIREBASE_ADMIN_CREDENTIALS={"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}
 
 # Application Configuration
 NODE_ENV=production
@@ -282,7 +311,6 @@ git push origin main
 
 - [ ] All environment variables set in Vercel dashboard
 - [ ] `.env.local` is in `.gitignore` (not committed)
-- [ ] `firebase-admin-service-account.json` is in `.gitignore`
 - [ ] No hardcoded credentials in source code
 - [ ] Strong `SESSION_SECRET` generated and set
 - [ ] HTTPS enabled (Vercel handles this by default)
@@ -306,26 +334,32 @@ git push origin main
 
 ## 🛠️ Troubleshooting
 
-### Issue: "Cannot find firebase-admin-service-account.json"
+### Issue: "Firebase Admin initialization failed"
 
 ```
-Error: ENOENT: no such file or directory, open 'firebase-admin-service-account.json'
+Error: Firebase Admin credentials not found
 ```
 
 **Solution:**
 ```bash
-# 1. Verify file exists in project root
-ls firebase-admin-service-account.json
+# 1. Verify Firebase environment variables are set in .env.local or Vercel:
+# Check that ALL of these are set:
+# - FIREBASE_PROJECT_ID
+# - FIREBASE_CLIENT_EMAIL
+# - FIREBASE_PRIVATE_KEY (with \\n for newlines)
+# - FIREBASE_PRIVATE_KEY_ID
+# - FIREBASE_CLIENT_ID
 
-# 2. If not found, download from Firebase Console:
-# - Go to Firebase Console → Project Settings → Service Accounts
-# - Click "Generate New Private Key"
-# - Save as firebase-admin-service-account.json in project root
+# 2. Or ensure FIREBASE_ADMIN_CREDENTIALS is set as full JSON string
 
-# 3. Verify FIREBASE_ADMIN_CREDENTIALS_PATH is set:
-echo $env:FIREBASE_ADMIN_CREDENTIALS_PATH
+# 3. Check that FIREBASE_PRIVATE_KEY has proper escaping:
+# If PRIVATE_KEY contains newlines, they must be escaped as \\n
+# Example correct format:
+# FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIEv...\n-----END PRIVATE KEY-----\n
 
-# 4. Should output: firebase-admin-service-account.json
+# 4. Verify credentials are valid by checking Firebase Console
+# Go to: Firebase Console → Project Settings → Service Accounts
+# Generate New Private Key if needed
 ```
 
 ### Issue: "Environment variables not loading"
@@ -356,9 +390,9 @@ Turbopack build encountered 1 warnings:
 Encountered unexpected file in NFT list
 ```
 
-**Status:** This is a non-critical warning about dynamic filesystem operations. Build still succeeds.
+**Status:** This is a non-critical warning that may appear during builds. Build still succeeds.
 
-**Solution:** No action needed. The warning is expected because `firebaseAdmin.ts` dynamically loads credentials from a file path. This is the secure way to handle credentials and doesn't affect functionality.
+**Solution:** No action needed. This can occur due to various dynamic operations in the codebase and doesn't affect functionality.
 
 ### Issue: "Firebase authentication not working"
 
@@ -366,7 +400,7 @@ Encountered unexpected file in NFT list
 ```
 1. Verify .env.local has all NEXT_PUBLIC_FIREBASE_* variables
 2. Verify values match your Firebase Console settings
-3. Verify firebase-admin-service-account.json is in project root
+3. Verify Firebase Admin environment variables are set (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, etc.)
 4. Check browser DevTools → Console for specific errors
 5. Verify Firebase security rules allow authentication
 6. Check Network tab for 401/403 errors on API requests
@@ -408,11 +442,10 @@ npm run build 2>&1 | Select-Object -Last 50
 |------|---------|---------|
 | `.env.example` | Template for env vars | ✅ Yes |
 | `.env.local` | Development credentials | ❌ No (.gitignore) |
-| `firebase-admin-service-account.json` | Firebase admin SDK | ❌ No (.gitignore) |
 | `.gitignore` | Git exclusion rules | ✅ Yes |
 | `next.config.ts` | Next.js configuration | ✅ Yes |
-| `app/lib/firebaseConfig.ts` | Firebase client config | ✅ Yes |
-| `app/lib/firebaseAdmin.ts` | Firebase admin SDK | ✅ Yes |
+| `app/lib/firebaseConfig.ts` | Firebase client config (uses NEXT_PUBLIC_*) | ✅ Yes |
+| `app/lib/firebaseAdmin.ts` | Firebase admin SDK (uses env vars) | ✅ Yes |
 
 ### Key Endpoints
 
