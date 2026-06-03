@@ -28,12 +28,12 @@ export async function GET(request: NextRequest) {
 
     const snapshot = await query.limit(200).get();
     const stock = snapshot.docs
-      .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, any>) }))
-      .map((item) => {
+      .map((doc: any) => ({ id: doc.id, ...(doc.data() as Record<string, any>) }))
+      .map((item: any) => {
         const record = item as Record<string, any>;
         return { ...item, stock: Number(record.qty ?? record.stock ?? 0) };
       })
-      .filter((item) => Number(item.stock) > 0);
+      .filter((item: any) => Number(item.stock) > 0);
     return NextResponse.json({ success: true, stock });
   } catch (error) {
     return NextResponse.json(

@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     if (!user || user.role !== "admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
     const snapshot = await firestore.collection("users").limit(500).get();
-    const users = await Promise.all(snapshot.docs.map(async (doc) => {
+    const users = await Promise.all(snapshot.docs.map(async (doc: any) => {
       const data = doc.data();
       const role = data.role || "patient";
       const roleDoc = role === "doctor" ? await firestore.collection("doctors").doc(doc.id).get() : role === "patient" ? await firestore.collection("patients").doc(doc.id).get() : null;

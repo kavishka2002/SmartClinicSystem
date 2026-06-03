@@ -4,7 +4,7 @@ import { firestore } from "../../lib/firebaseAdmin";
 export async function GET() {
   try {
     const snapshot = await firestore.collection("doctors").get();
-    const doctors = snapshot.docs.map((doc) => {
+    const doctors = snapshot.docs.map((doc: any) => {
       const data = doc.data();
       const rawFee = typeof data.doctorCharges === "string" ? data.doctorCharges :
         typeof data.fee === "string" ? data.fee : data.fee != null ? String(data.fee) :

@@ -245,7 +245,7 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
     }
 
     if (stockDeductions.length > 0) {
-      await firestore.runTransaction(async (tx) => {
+      await firestore.runTransaction(async (tx: any) => {
         tx.update(docRef, updates);
         for (const deduction of stockDeductions) {
           tx.update(deduction.ref, {

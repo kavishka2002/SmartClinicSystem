@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     // Simple revenue: sum of paid appointment fees (attempt to parse numeric value)
     let revenue = 0;
-    appointmentsSnap.docs.forEach((doc) => {
+    appointmentsSnap.docs.forEach((doc: any) => {
       const data = doc.data() as any;
       if (data.paid) {
         const feeRaw = String(data.fee || data.consultationFee || "$0");
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const lowStockCount = stockSnap.docs.filter((d) => {
+    const lowStockCount = stockSnap.docs.filter((d: any) => {
       const data = d.data() as any;
       const qty = Number(data.qty ?? data.stock ?? 0);
       return qty <= 20;
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       totalPatients: patientsSnap.size,
       totalDoctors: doctorsSnap.size,
       totalAppointments: appointmentsSnap.size,
-      pendingPrescriptions: prescriptionsSnap.docs.filter(d => (d.data() as any).status !== "Dispensed").length,
+      pendingPrescriptions: prescriptionsSnap.docs.filter((d: any) => (d.data() as any).status !== "Dispensed").length,
       lowStockCount,
       revenue,
     };

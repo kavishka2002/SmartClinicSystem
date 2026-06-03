@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     }
 
     const snapshot = await query.limit(100).get();
-    const medicines = snapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as FirebaseFirestore.DocumentData) }));
+    const medicines = snapshot.docs.map((doc: any) => ({ id: doc.id, ...(doc.data() as FirebaseFirestore.DocumentData) }));
 
     return NextResponse.json({ medicines });
   } catch (error) {

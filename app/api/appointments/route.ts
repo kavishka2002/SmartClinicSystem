@@ -64,7 +64,7 @@ async function getTakenQueueNumbers(doctorId: string, date: string) {
     .get();
 
   const taken = new Set<number>();
-  snapshot.docs.forEach((doc) => {
+  snapshot.docs.forEach((doc: any) => {
     const data = doc.data() as Record<string, unknown>;
     const queueNumber = parseQueueNumber(data.queueNumber);
     const status = typeof data.status === "string" ? data.status.toLowerCase() : "";
@@ -327,9 +327,9 @@ export async function POST(request: NextRequest) {
       .where("doctorUid", "==", doctorId)
       .where("date", "==", date)
       .get();
-    const existingAppointments = existingAppointmentSnapshot.docs.map((doc) => doc.data() as Record<string, unknown>);
+    const existingAppointments = existingAppointmentSnapshot.docs.map((doc: any) => doc.data() as Record<string, unknown>);
 
-    const duplicateAppointment = existingAppointments.some((appt) => {
+    const duplicateAppointment = existingAppointments.some((appt: any) => {
       if (typeof appt.status === "string" && appt.status.toLowerCase() === "cancelled") {
         return false;
       }

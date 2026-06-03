@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     const isActive = typeof doctorData.isActive === "boolean" ? doctorData.isActive : true;
 
     const appointmentsSnapshot = await firestore.collection("appointments").where("doctorUid", "==", doctorId).get();
-    const allAppointments = appointmentsSnapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }) as Record<string, unknown> & { id: string });
+    const allAppointments = appointmentsSnapshot.docs.map((doc: any) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }) as Record<string, unknown> & { id: string });
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -68,8 +68,8 @@ export async function GET(request: NextRequest) {
     };
 
     const takenQueueNumbersForDate = new Set<number>();
-    const appointmentsForDate = allAppointments.filter((appt) => normalizeDateString(appt.date) === date);
-    appointmentsForDate.forEach((appt) => {
+    const appointmentsForDate = allAppointments.filter((appt: any) => normalizeDateString(appt.date) === date);
+    appointmentsForDate.forEach((appt: any) => {
       const queueNumber = normalizeQueueNumber(appt.queueNumber);
       const status = typeof appt.status === "string" ? appt.status.toLowerCase() : "";
       if (queueNumber && status !== "cancelled") {
@@ -82,18 +82,18 @@ export async function GET(request: NextRequest) {
     const remainingSlots = Math.max(0, capacity - bookedCount);
 
     const availableQueueNumbers = Array.from({ length: capacity }, (_, index) => index + 1)
-      .filter((token) => !takenQueueNumbersForDate.has(token));
+      .filter((token: any) => !takenQueueNumbersForDate.has(token));
 
     const dayName = new Date(date).toLocaleDateString("en-US", { weekday: "long" });
-    const normalizedAvailableDays = availableDays.map((day) => String(day).trim().toLowerCase());
+    const normalizedAvailableDays = availableDays.map((day: any) => String(day).trim().toLowerCase());
     const isAllowedDay = normalizedAvailableDays.includes(dayName.toLowerCase());
 
     const getStatusForDate = (targetDate: string) => {
       const targetDay = new Date(targetDate).toLocaleDateString("en-US", { weekday: "long" });
       const allowed = normalizedAvailableDays.includes(targetDay.toLowerCase());
       if (!allowed || !isActive) return "Unavailable";
-      const dailyBooked = allAppointments.filter((appt) => normalizeDateString(appt.date) === targetDate)
-        .filter((appt) => {
+      const dailyBooked = allAppointments.filter((appt: any) => normalizeDateString(appt.date) === targetDate)
+        .filter((appt: any) => {
           const status = typeof appt.status === "string" ? appt.status.toLowerCase() : "";
           return status !== "cancelled";
         }).length;
@@ -107,8 +107,8 @@ export async function GET(request: NextRequest) {
       entryDate.setDate(today.getDate() + offset);
       const dateKey = entryDate.toISOString().slice(0, 10);
       const status = getStatusForDate(dateKey);
-      const dayBooked = allAppointments.filter((appt) => normalizeDateString(appt.date) === dateKey)
-        .filter((appt) => {
+      const dayBooked = allAppointments.filter((appt: any) => normalizeDateString(appt.date) === dateKey)
+        .filter((appt: any) => {
           const status = typeof appt.status === "string" ? appt.status.toLowerCase() : "";
           return status !== "cancelled";
         }).length;
@@ -122,12 +122,12 @@ export async function GET(request: NextRequest) {
     });
 
     const currentAppointment = appointmentsForDate
-      .filter((appt) => typeof appt.queueNumber !== "undefined" && appt.queueNumber !== null)
-      .sort((a, b) => (Number(a.queueNumber) || 0) - (Number(b.queueNumber) || 0))
-      .find((appt) => typeof appt.status === "string" && appt.status.toLowerCase() === "with doctor")
+      .filter((appt: any) => typeof appt.queueNumber !== "undefined" && appt.queueNumber !== null)
+      .sort((a: any, b: any) => (Number(a.queueNumber) || 0) - (Number(b.queueNumber) || 0))
+      .find((appt: any) => typeof appt.status === "string" && appt.status.toLowerCase() === "with doctor")
       || appointmentsForDate
-      .filter((appt) => typeof appt.queueNumber !== "undefined" && appt.queueNumber !== null)
-      .sort((a, b) => (Number(a.queueNumber) || 0) - (Number(b.queueNumber) || 0))[0];
+      .filter((appt: any) => typeof appt.queueNumber !== "undefined" && appt.queueNumber !== null)
+      .sort((a: any, b: any) => (Number(a.queueNumber) || 0) - (Number(b.queueNumber) || 0))[0];
 
     return NextResponse.json({
       success: true,

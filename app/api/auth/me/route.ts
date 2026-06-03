@@ -66,11 +66,11 @@ export async function PATCH(request: NextRequest) {
     const userFields = ["fullName", "phoneNumber", "email"];
     const patientFields = ["address", "dob", "gender", "photo", "height", "weight"];
 
-    userFields.forEach((k) => {
+    userFields.forEach((k: any) => {
       if (k in body) allowedUserFields[k] = (body as any)[k];
     });
 
-    patientFields.forEach((k) => {
+    patientFields.forEach((k: any) => {
       if (k in body) allowedPatientFields[k] = (body as any)[k];
     });
 
